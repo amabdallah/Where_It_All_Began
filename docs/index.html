@@ -2,8 +2,11 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Where It All Began — Print Optimized</title>
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover"
+  />
+  <title>Where It All Began — Adel & Salsabeel</title>
 
   <link href="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.css" rel="stylesheet">
   <script src="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.js"></script>
@@ -19,10 +22,13 @@
       --accent-soft: #d89aab;
       --border: rgba(72, 52, 43, 0.12);
       --shadow: rgba(43, 25, 18, 0.16);
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
     }
 
     * {
       box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
     }
 
     html, body {
@@ -34,6 +40,20 @@
       font-family: "Inter", "Helvetica Neue", Arial, sans-serif;
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
+      overscroll-behavior: none;
+    }
+
+    body {
+      overflow: hidden;
+    }
+
+    #app {
+      position: relative;
+      width: 100%;
+      height: 100dvh;
+      min-height: 100vh;
+      overflow: hidden;
+      background: var(--paper);
     }
 
     #map {
@@ -44,11 +64,11 @@
     .poster {
       position: absolute;
       top: 80px;
-      text-align: center;
       left: 32px;
       width: 520px;
       max-height: calc(100% - 52px);
       overflow: auto;
+      -webkit-overflow-scrolling: touch;
       z-index: 2;
       background: var(--panel);
       border: 1px solid var(--border);
@@ -56,6 +76,7 @@
       box-shadow: 0 20px 60px var(--shadow);
       backdrop-filter: blur(10px) saturate(1.1);
       padding: 28px 28px 24px 28px;
+      scrollbar-width: thin;
     }
 
     h1 {
@@ -67,6 +88,17 @@
       letter-spacing: -0.6px;
       color: #211815;
       white-space: nowrap;
+      text-align: center;
+    }
+
+    h2 {
+      margin: 10px 0 0 0;
+      text-align: center;
+      font-family: "Amiri", "Noto Naskh Arabic", Georgia, serif;
+      font-size: 22px;
+      line-height: 1.5;
+      font-weight: 700;
+      color: #6e4d57;
     }
 
     .location {
@@ -78,6 +110,7 @@
       text-transform: uppercase;
       color: var(--muted);
       font-weight: 600;
+      text-align: center;
     }
 
     .names {
@@ -87,6 +120,7 @@
       line-height: 1.45;
       font-weight: 700;
       color: var(--text);
+      text-align: center;
     }
 
     .date {
@@ -95,11 +129,17 @@
       line-height: 1.45;
       color: var(--muted);
       font-weight: 500;
+      text-align: center;
     }
 
     .divider {
       height: 1px;
-      background: linear-gradient(to right, transparent, rgba(184, 75, 104, 0.55), transparent);
+      background: linear-gradient(
+        to right,
+        transparent,
+        rgba(184, 75, 104, 0.55),
+        transparent
+      );
       margin: 18px 0 20px 0;
     }
 
@@ -116,6 +156,23 @@
       gap: 14px;
       margin-bottom: 16px;
       align-items: start;
+      padding: 10px 8px;
+      border-radius: 16px;
+      transition: background 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+      cursor: pointer;
+    }
+
+    .places li:hover {
+      background: rgba(255, 255, 255, 0.55);
+    }
+
+    .places li:active {
+      transform: scale(0.992);
+    }
+
+    .places li.active {
+      background: rgba(184, 75, 104, 0.09);
+      box-shadow: inset 0 0 0 1px rgba(184, 75, 104, 0.18);
     }
 
     .places li:last-child {
@@ -254,6 +311,12 @@
         width: 17in;
         height: 11in;
         background: #ffffff !important;
+        overflow: visible;
+      }
+
+      #app {
+        height: auto;
+        overflow: visible;
       }
 
       #map {
@@ -279,7 +342,8 @@
       .location,
       .names,
       .date,
-      .caption {
+      .caption,
+      h2 {
         text-align: center;
       }
 
@@ -326,13 +390,161 @@
       }
     }
 
+    /* iPhone / mobile app-style layout */
+    @media (max-width: 768px) {
+      body {
+        overflow: hidden;
+      }
+
+      #app {
+        display: grid;
+        grid-template-rows: 42dvh 1fr;
+        height: 100dvh;
+      }
+
+      #map {
+        position: sticky;
+        top: 0;
+        height: 42dvh;
+        min-height: 300px;
+        z-index: 1;
+      }
+
+      .poster {
+        position: relative;
+        top: 0;
+        left: 0;
+        width: 100%;
+        max-height: none;
+        height: 100%;
+        overflow: auto;
+        border-radius: 26px 26px 0 0;
+        padding: 18px 16px calc(18px + var(--safe-bottom)) 16px;
+        box-shadow: 0 -8px 30px rgba(43, 25, 18, 0.10);
+        backdrop-filter: blur(10px) saturate(1.06);
+        background: rgba(255, 252, 248, 0.97);
+        border-left: none;
+        border-right: none;
+        border-bottom: none;
+        margin-top: -18px;
+        z-index: 2;
+      }
+
+      .poster::before {
+        content: "";
+        display: block;
+        width: 46px;
+        height: 5px;
+        border-radius: 999px;
+        background: rgba(109, 97, 88, 0.24);
+        margin: 2px auto 14px auto;
+      }
+
+      h1 {
+        font-size: 29px;
+        line-height: 1.05;
+        white-space: normal;
+        letter-spacing: -0.4px;
+      }
+
+      h2 {
+        font-size: 16px;
+        line-height: 1.7;
+        margin-top: 8px;
+        padding: 0 4px;
+      }
+
+      .location {
+        margin-top: 10px;
+        font-size: 12px;
+        letter-spacing: 0.18em;
+        line-height: 1.45;
+      }
+
+      .names {
+        margin-top: 10px;
+        font-size: 19px;
+      }
+
+      .date {
+        margin-top: 8px;
+        font-size: 15px;
+      }
+
+      .divider {
+        margin: 16px 0 16px 0;
+      }
+
+      .places li {
+        grid-template-columns: 34px 1fr;
+        gap: 10px;
+        margin-bottom: 10px;
+        padding: 11px 8px;
+        border-radius: 14px;
+      }
+
+      .num {
+        width: 18px;
+        height: 18px;
+        margin-top: 6px;
+        margin-left: 4px;
+      }
+
+      .num::before,
+      .num::after {
+        width: 18px;
+        height: 18px;
+      }
+
+      .num::before {
+        top: -9px;
+      }
+
+      .num::after {
+        left: 9px;
+      }
+
+      .num span {
+        font-size: 11px;
+        transform: rotate(45deg) translateY(-2px);
+      }
+
+      .place-name {
+        font-size: 14px;
+        line-height: 1.33;
+      }
+
+      .place-activity {
+        font-size: 13px;
+        line-height: 1.45;
+        margin-top: 3px;
+      }
+
+      .controls {
+        margin-top: 18px;
+        flex-direction: column;
+        gap: 9px;
+      }
+
+      button {
+        width: 100%;
+        padding: 13px 16px;
+        font-size: 15px;
+      }
+
+      .mapboxgl-ctrl-top-right {
+        top: calc(10px + var(--safe-top));
+        right: 10px;
+      }
+    }
+
     /* Hidden export-only container */
     #export-stage {
       position: fixed;
       left: -99999px;
       top: 0;
-      width: 5100px;   /* 17in * 300dpi */
-      height: 3300px;  /* 11in * 300dpi */
+      width: 5100px;
+      height: 3300px;
       overflow: hidden;
       background: #ffffff;
       z-index: -1;
@@ -486,35 +698,34 @@
   </style>
 </head>
 <body>
-  <div id="map"></div>
+  <div id="app">
+    <div id="map"></div>
 
-  <div class="poster">
-    <h1>Where It All Began</h1>
-	<h2>  من هنا بسم الله بدأنا وعلى الله توكلنا</h2>
+    <div class="poster" id="poster-panel">
+      <h1>Where It All Began</h1>
+      <h2>من هنا بسم الله بدأنا وعلى الله توكلنا</h2>
 
-    <div class="location">Louisville, Kentucky</div>
+      <div class="location">Louisville, Kentucky</div>
+      <div class="names">Adel &amp; Salsabeel</div>
+      <div class="date">April 3–5, 2026</div>
 
-    <div class="names">Adel & Salsabeel</div>
-    <div class="date">April 3–5, 2026</div>
+      <div class="divider"></div>
 
-    <div class="divider"></div>
+      <ul class="places" id="places-list"></ul>
 
-    <ul class="places" id="places-list"></ul>
-
-    <div class="controls">
-      <button class="primary" onclick="fitAll()">Fit map</button>
-      <button class="secondary" onclick="window.print()">Print 11×17 PDF</button>
-      <!-- <button class="secondary" onclick="exportHighResJPG()">Export 600 DPI JPG</button> -->
+      <div class="controls">
+        <button class="primary" onclick="fitAll()">Fit map</button>
+        <button class="secondary" onclick="window.print()">Print 11×17 PDF</button>
+      </div>
     </div>
   </div>
 
-  <!-- Hidden export-only stage -->
   <div id="export-stage" aria-hidden="true">
     <div id="export-map"></div>
     <div id="export-poster">
       <h1>Where It All Began</h1>
       <div class="location">Louisville, Kentucky</div>
-      <div class="names">Adel & Salsabeel</div>
+      <div class="names">Adel &amp; Salsabeel</div>
       <div class="date">April 3–5, 2026</div>
       <div class="divider"></div>
       <ul class="places" id="export-places-list"></ul>
@@ -666,7 +877,108 @@
       ]
     };
 
+    let map;
+    let activePopup = null;
+    let selectedOrder = null;
+    const markerElementsByOrder = new Map();
+
+    function isMobileLayout() {
+      return window.matchMedia("(max-width: 768px)").matches;
+    }
+
     function populatePlacesList(containerId) {
+      const list = document.getElementById(containerId);
+      list.innerHTML = "";
+
+      places.forEach((p) => {
+        const li = document.createElement("li");
+        li.dataset.order = String(p.order);
+        li.setAttribute("role", "button");
+        li.setAttribute("tabindex", "0");
+        li.setAttribute("aria-label", `${p.order}. ${p.name}. ${p.activity}`);
+
+        li.innerHTML = `
+          <div class="num"><span>${p.order}</span></div>
+          <div>
+            <div class="place-name">${p.name}</div>
+            <div class="place-activity">${p.activity}</div>
+          </div>
+        `;
+
+        li.addEventListener("click", () => focusPlace(p.order));
+        li.addEventListener("keydown", (e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            focusPlace(p.order);
+          }
+        });
+
+        list.appendChild(li);
+      });
+    }
+
+    function setActiveListItem(order) {
+      selectedOrder = order;
+      document.querySelectorAll(".places li").forEach((el) => {
+        el.classList.toggle("active", Number(el.dataset.order) === order);
+      });
+    }
+
+    function scrollListItemIntoView(order) {
+      const el = document.querySelector(`#places-list li[data-order="${order}"]`);
+      if (!el) return;
+
+      el.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest"
+      });
+    }
+
+    function getPlaceByOrder(order) {
+      return places.find(p => p.order === order);
+    }
+
+    function openPopupForPlace(place) {
+      if (!place) return;
+
+      if (activePopup) {
+        activePopup.remove();
+      }
+
+      activePopup = new mapboxgl.Popup({ offset: isMobileLayout() ? 14 : 18 })
+        .setLngLat(place.coordinates)
+        .setHTML(`
+          <div class="popup-title">${place.order}. ${place.name}</div>
+          <div class="popup-activity">${place.activity}</div>
+          <div>${place.address}</div>
+        `)
+        .addTo(map);
+    }
+
+    function flyToPlace(place) {
+      if (!place) return;
+
+      map.flyTo({
+        center: place.coordinates,
+        zoom: isMobileLayout() ? 11.9 : 12.3,
+        speed: 0.9,
+        curve: 1.3,
+        essential: true,
+        offset: isMobileLayout() ? [0, -60] : [180, 0]
+      });
+    }
+
+    function focusPlace(order) {
+      const place = getPlaceByOrder(order);
+      if (!place) return;
+
+      setActiveListItem(order);
+      flyToPlace(place);
+      openPopupForPlace(place);
+      scrollListItemIntoView(order);
+    }
+
+    function populateExportPlacesList(containerId) {
       const list = document.getElementById(containerId);
       list.innerHTML = "";
       places.forEach((p) => {
@@ -683,18 +995,54 @@
     }
 
     populatePlacesList("places-list");
-    populatePlacesList("export-places-list");
+    populateExportPlacesList("export-places-list");
 
-    const map = new mapboxgl.Map({
-      container: "map",
-      style: "mapbox://styles/mapbox/streets-v12",
-      center: [-85.67, 38.20],
-      zoom: 9,
-      preserveDrawingBuffer: true,
-      attributionControl: false
-    });
+    function createMap() {
+      map = new mapboxgl.Map({
+        container: "map",
+        style: "mapbox://styles/mapbox/streets-v12",
+        center: [-85.67, 38.20],
+        zoom: 9,
+        preserveDrawingBuffer: true,
+        attributionControl: false
+      });
 
-    map.addControl(new mapboxgl.NavigationControl(), "top-right");
+      map.addControl(new mapboxgl.NavigationControl(), "top-right");
+
+      map.on("load", () => {
+        applyMapStyling(map);
+
+        map.on("click", "point-hearts", (e) => {
+          const feature = e.features[0];
+          const order = Number(feature.properties.id);
+          focusPlace(order);
+        });
+
+        map.on("click", "point-hitbox", (e) => {
+          const feature = e.features[0];
+          const order = Number(feature.properties.id);
+          focusPlace(order);
+        });
+
+        map.on("mouseenter", "point-hearts", () => {
+          map.getCanvas().style.cursor = "pointer";
+        });
+
+        map.on("mouseleave", "point-hearts", () => {
+          map.getCanvas().style.cursor = "";
+        });
+
+        map.on("mouseenter", "point-hitbox", () => {
+          map.getCanvas().style.cursor = "pointer";
+        });
+
+        map.on("mouseleave", "point-hitbox", () => {
+          map.getCanvas().style.cursor = "";
+        });
+
+        fitAll();
+      });
+    }
 
     function fitBoundsOnMap(targetMap, isExport = false) {
       const bounds = new mapboxgl.LngLatBounds();
@@ -703,17 +1051,32 @@
       bounds.extend(kentuckyLabelGeojson.features[0].geometry.coordinates);
       bounds.extend(ohioRiverLabelGeojson.features[0].geometry.coordinates);
 
+      let padding;
+
+      if (isExport) {
+        padding = { top: 180, bottom: 260, left: 1800, right: 220 };
+      } else if (isMobileLayout()) {
+        padding = { top: 50, bottom: 70, left: 35, right: 35 };
+      } else {
+        padding = { top: 60, bottom: 90, left: 600, right: 70 };
+      }
+
       targetMap.fitBounds(bounds, {
-        padding: isExport
-          ? { top: 180, bottom: 260, left: 1800, right: 220 }
-          : { top: 60, bottom: 90, left: 600, right: 70 },
+        padding,
         duration: 0,
-        maxZoom: isExport ? 10.7 : 10.7
+        maxZoom: 10.7
       });
     }
 
     function fitAll() {
       fitBoundsOnMap(map, false);
+
+      if (activePopup) {
+        activePopup.remove();
+        activePopup = null;
+      }
+
+      setActiveListItem(null);
     }
 
     function applyMapStyling(targetMap) {
@@ -761,6 +1124,21 @@
         }
       }
 
+      const heartSize = isMobileLayout() ? 40 : 50;
+      const numberSize = isMobileLayout() ? 14 : 18;
+      const kentuckyLabelSize = isMobileLayout() ? 24 : 35;
+      const riverLabelSize = isMobileLayout() ? 16 : 22;
+
+      targetMap.addLayer({
+        id: "point-hitbox",
+        type: "circle",
+        source: "places",
+        paint: {
+          "circle-radius": isMobileLayout() ? 18 : 22,
+          "circle-color": "rgba(0,0,0,0)"
+        }
+      });
+
       targetMap.addLayer({
         id: "point-hearts",
         type: "symbol",
@@ -768,7 +1146,7 @@
         layout: {
           "text-field": "❤",
           "text-font": ["Open Sans Bold", "Arial Unicode MS Bold"],
-          "text-size": 50,
+          "text-size": heartSize,
           "text-anchor": "center",
           "text-offset": [0, 0],
           "text-allow-overlap": true,
@@ -788,7 +1166,7 @@
         layout: {
           "text-field": ["to-string", ["get", "id"]],
           "text-font": ["Open Sans Bold", "Arial Unicode MS Bold"],
-          "text-size": 18,
+          "text-size": numberSize,
           "text-anchor": "center",
           "text-offset": [0, 0],
           "text-allow-overlap": true,
@@ -808,7 +1186,7 @@
         layout: {
           "text-field": ["get", "name"],
           "text-font": ["Open Sans Bold", "Arial Unicode MS Bold"],
-          "text-size": 35,
+          "text-size": kentuckyLabelSize,
           "text-letter-spacing": 0.20,
           "text-anchor": "center",
           "text-allow-overlap": true,
@@ -828,7 +1206,7 @@
         layout: {
           "text-field": ["get", "name"],
           "text-font": ["Open Sans Italic", "Arial Unicode MS Regular"],
-          "text-size": 22,
+          "text-size": riverLabelSize,
           "text-letter-spacing": 0.18,
           "text-anchor": "center",
           "text-rotate": -50,
@@ -854,35 +1232,28 @@
           ]);
         } catch (e) {}
       }
-
-
     }
 
-    map.on("load", () => {
-      applyMapStyling(map);
+    window.addEventListener("resize", () => {
+      if (!map) return;
+      map.resize();
 
-      map.on("click", "point-hearts", (e) => {
-        const f = e.features[0];
-        new mapboxgl.Popup({ offset: 18 })
-          .setLngLat(JSON.parse(f.properties.trueCoordinates))
-          .setHTML(`
-            <div class="popup-title">${f.properties.id}. ${f.properties.name}</div>
-            <div class="popup-activity">${f.properties.activity}</div>
-            <div>${f.properties.address}</div>
-          `)
-          .addTo(map);
-      });
-
-      map.on("mouseenter", "point-hearts", () => {
-        map.getCanvas().style.cursor = "pointer";
-      });
-
-      map.on("mouseleave", "point-hearts", () => {
-        map.getCanvas().style.cursor = "";
-      });
-
-      fitAll();
+      if (selectedOrder !== null) {
+        const place = getPlaceByOrder(selectedOrder);
+        if (place) {
+          map.easeTo({
+            center: place.coordinates,
+            zoom: isMobileLayout() ? 11.9 : 12.3,
+            duration: 0,
+            offset: isMobileLayout() ? [0, -60] : [180, 0]
+          });
+        }
+      } else {
+        fitBoundsOnMap(map, false);
+      }
     });
+
+    createMap();
 
     async function exportHighResJPG() {
       const exportStage = document.getElementById("export-stage");
@@ -988,7 +1359,6 @@
 
       ctx.fillStyle = "#6d6158";
       ctx.font = "600 68px Georgia";
-      ctx.letterSpacing = "0px";
       ctx.fillText("Louisville, Kentucky", x + width / 2, cy + 60);
       cy += 118;
 
