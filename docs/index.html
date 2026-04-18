@@ -6,7 +6,7 @@
     name="viewport"
     content="width=device-width, initial-scale=1, viewport-fit=cover"
   />
-  <title>Where It All Began — Adel & Salsabeel</title>
+  <title>Where It All Began — Print Optimized</title>
 
   <link href="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.css" rel="stylesheet">
   <script src="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.js"></script>
@@ -247,7 +247,8 @@
       justify-content: center;
     }
 
-    button {
+    button,
+    select {
       border: 0;
       border-radius: 999px;
       padding: 11px 16px;
@@ -258,7 +259,8 @@
       transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
     }
 
-    button:hover {
+    button:hover,
+    select:hover {
       transform: translateY(-1px);
     }
 
@@ -268,10 +270,27 @@
       box-shadow: 0 10px 24px rgba(184, 75, 104, 0.22);
     }
 
-    .secondary {
-      background: rgba(255,255,255,0.8);
+    .secondary,
+    select {
+      background: rgba(255,255,255,0.88);
       color: var(--text);
       border: 1px solid rgba(72, 52, 43, 0.12);
+    }
+
+    select {
+      outline: none;
+      min-width: 135px;
+      appearance: none;
+      -webkit-appearance: none;
+      background-image:
+        linear-gradient(45deg, transparent 50%, #6d6158 50%),
+        linear-gradient(135deg, #6d6158 50%, transparent 50%);
+      background-position:
+        calc(100% - 18px) calc(50% - 3px),
+        calc(100% - 12px) calc(50% - 3px);
+      background-size: 6px 6px, 6px 6px;
+      background-repeat: no-repeat;
+      padding-right: 34px;
     }
 
     .mapboxgl-popup-content {
@@ -390,7 +409,6 @@
       }
     }
 
-    /* iPhone / mobile app-style layout */
     @media (max-width: 768px) {
       body {
         overflow: hidden;
@@ -526,7 +544,8 @@
         gap: 9px;
       }
 
-      button {
+      button,
+      select {
         width: 100%;
         padding: 13px 16px;
         font-size: 15px;
@@ -538,7 +557,6 @@
       }
     }
 
-    /* Hidden export-only container */
     #export-stage {
       position: fixed;
       left: -99999px;
@@ -714,6 +732,13 @@
       <ul class="places" id="places-list"></ul>
 
       <div class="controls">
+		<select id="basemap-select" onchange="changeBasemap(this.value)">
+		  <option value="light">Light</option>
+		  <option value="streets" selected>Streets</option>
+		  <option value="outdoors">Outdoors</option>
+		  <option value="satellite">Satellite</option>
+		</select>
+
         <button class="primary" onclick="fitAll()">Fit map</button>
         <button class="secondary" onclick="window.print()">Print 11×17 PDF</button>
       </div>
@@ -734,6 +759,15 @@
 
   <script>
     mapboxgl.accessToken = 'pk.eyJ1IjoiYWFiZGFsYWgiLCJhIjoiY21udmI3c2ZzMTdhMjJ0b256YnF5ZHVwbCJ9.mQt7Ce_CWnI-ghiUG_yxRw';
+
+    const BASEMAPS = {
+      streets: "mapbox://styles/mapbox/streets-v12",
+      light: "mapbox://styles/mapbox/light-v11",
+      outdoors: "mapbox://styles/mapbox/outdoors-v12",
+      satellite: "mapbox://styles/mapbox/satellite-streets-v12"
+    };
+
+    let currentBasemap = "streets";
 
     const places = [
       {
@@ -880,7 +914,6 @@
     let map;
     let activePopup = null;
     let selectedOrder = null;
-    const markerElementsByOrder = new Map();
 
     function isMobileLayout() {
       return window.matchMedia("(max-width: 768px)").matches;
@@ -917,10 +950,26 @@
       });
     }
 
+    function populateExportPlacesList(containerId) {
+      const list = document.getElementById(containerId);
+      list.innerHTML = "";
+      places.forEach((p) => {
+        const li = document.createElement("li");
+        li.innerHTML = `
+          <div class="num"><span>${p.order}</span></div>
+          <div>
+            <div class="place-name">${p.name}</div>
+            <div class="place-activity">${p.activity}</div>
+          </div>
+        `;
+        list.appendChild(li);
+      });
+    }
+
     function setActiveListItem(order) {
       selectedOrder = order;
       document.querySelectorAll(".places li").forEach((el) => {
-        el.classList.toggle("active", Number(el.dataset.order) === order);
+        el.classList.toggle("active", order !== null && Number(el.dataset.order) === order);
       });
     }
 
@@ -978,72 +1027,6 @@
       scrollListItemIntoView(order);
     }
 
-    function populateExportPlacesList(containerId) {
-      const list = document.getElementById(containerId);
-      list.innerHTML = "";
-      places.forEach((p) => {
-        const li = document.createElement("li");
-        li.innerHTML = `
-          <div class="num"><span>${p.order}</span></div>
-          <div>
-            <div class="place-name">${p.name}</div>
-            <div class="place-activity">${p.activity}</div>
-          </div>
-        `;
-        list.appendChild(li);
-      });
-    }
-
-    populatePlacesList("places-list");
-    populateExportPlacesList("export-places-list");
-
-    function createMap() {
-      map = new mapboxgl.Map({
-        container: "map",
-        style: "mapbox://styles/mapbox/streets-v12",
-        center: [-85.67, 38.20],
-        zoom: 9,
-        preserveDrawingBuffer: true,
-        attributionControl: false
-      });
-
-      map.addControl(new mapboxgl.NavigationControl(), "top-right");
-
-      map.on("load", () => {
-        applyMapStyling(map);
-
-        map.on("click", "point-hearts", (e) => {
-          const feature = e.features[0];
-          const order = Number(feature.properties.id);
-          focusPlace(order);
-        });
-
-        map.on("click", "point-hitbox", (e) => {
-          const feature = e.features[0];
-          const order = Number(feature.properties.id);
-          focusPlace(order);
-        });
-
-        map.on("mouseenter", "point-hearts", () => {
-          map.getCanvas().style.cursor = "pointer";
-        });
-
-        map.on("mouseleave", "point-hearts", () => {
-          map.getCanvas().style.cursor = "";
-        });
-
-        map.on("mouseenter", "point-hitbox", () => {
-          map.getCanvas().style.cursor = "pointer";
-        });
-
-        map.on("mouseleave", "point-hitbox", () => {
-          map.getCanvas().style.cursor = "";
-        });
-
-        fitAll();
-      });
-    }
-
     function fitBoundsOnMap(targetMap, isExport = false) {
       const bounds = new mapboxgl.LngLatBounds();
 
@@ -1077,6 +1060,36 @@
       }
 
       setActiveListItem(null);
+    }
+
+    function bindMapInteractions(targetMap) {
+      targetMap.on("click", "point-hearts", (e) => {
+        const feature = e.features[0];
+        const order = Number(feature.properties.id);
+        focusPlace(order);
+      });
+
+      targetMap.on("click", "point-hitbox", (e) => {
+        const feature = e.features[0];
+        const order = Number(feature.properties.id);
+        focusPlace(order);
+      });
+
+      targetMap.on("mouseenter", "point-hearts", () => {
+        targetMap.getCanvas().style.cursor = "pointer";
+      });
+
+      targetMap.on("mouseleave", "point-hearts", () => {
+        targetMap.getCanvas().style.cursor = "";
+      });
+
+      targetMap.on("mouseenter", "point-hitbox", () => {
+        targetMap.getCanvas().style.cursor = "pointer";
+      });
+
+      targetMap.on("mouseleave", "point-hitbox", () => {
+        targetMap.getCanvas().style.cursor = "";
+      });
     }
 
     function applyMapStyling(targetMap) {
@@ -1234,6 +1247,60 @@
       }
     }
 
+    function createMap() {
+      map = new mapboxgl.Map({
+        container: "map",
+        style: BASEMAPS[currentBasemap],
+        center: [-85.67, 38.20],
+        zoom: 9,
+        preserveDrawingBuffer: true,
+        attributionControl: false
+      });
+
+      map.addControl(new mapboxgl.NavigationControl(), "top-right");
+
+      map.on("load", () => {
+        applyMapStyling(map);
+        bindMapInteractions(map);
+        fitAll();
+      });
+    }
+
+    function changeBasemap(basemapKey) {
+      if (!BASEMAPS[basemapKey] || basemapKey === currentBasemap) return;
+
+      const selectedOrderBefore = selectedOrder;
+      currentBasemap = basemapKey;
+
+      if (activePopup) {
+        activePopup.remove();
+        activePopup = null;
+      }
+
+      map.setStyle(BASEMAPS[basemapKey]);
+
+      map.once("style.load", () => {
+        applyMapStyling(map);
+        bindMapInteractions(map);
+
+        if (selectedOrderBefore !== null) {
+          const place = getPlaceByOrder(selectedOrderBefore);
+          if (place) {
+            setActiveListItem(selectedOrderBefore);
+            map.easeTo({
+              center: place.coordinates,
+              zoom: isMobileLayout() ? 11.9 : 12.3,
+              duration: 0,
+              offset: isMobileLayout() ? [0, -60] : [180, 0]
+            });
+            openPopupForPlace(place);
+          }
+        } else {
+          fitAll();
+        }
+      });
+    }
+
     window.addEventListener("resize", () => {
       if (!map) return;
       map.resize();
@@ -1253,6 +1320,8 @@
       }
     });
 
+    populatePlacesList("places-list");
+    populateExportPlacesList("export-places-list");
     createMap();
 
     async function exportHighResJPG() {
@@ -1261,7 +1330,7 @@
 
       const exportMap = new mapboxgl.Map({
         container: "export-map",
-        style: "mapbox://styles/mapbox/streets-v12",
+        style: BASEMAPS[currentBasemap],
         center: [-85.67, 38.20],
         zoom: 9,
         preserveDrawingBuffer: true,
@@ -1321,7 +1390,7 @@
         const dataURL = finalCanvas.toDataURL("image/jpeg", 0.98);
         const link = document.createElement("a");
         link.href = dataURL;
-        link.download = "Where-It-All-Began-11x17-600dpi.jpg";
+        link.download = "Where-It-All-Began-11x17-300dpi.jpg";
         link.click();
 
         exportMap.remove();
